@@ -1,69 +1,95 @@
 @startuml
-!theme plain
-skinparam linetype ortho
-skinparam nodesep 100
-skinparam ranksep 100
-skinparam padding 30
-
-scale 1.2
-
-left to right direction
-
-actor User as "End User" <<Person>> #DarkSlateGray
-
-rectangle "API Gateway" as gateway #LightBlue {
-  rectangle "Interaction API" as interaction_api #LightCyan
-  rectangle "Ranking API" as ranking_api #LightCyan
+!theme crt-amber
+skinparam {
+  defaultFontName "Segoe UI"
+  shadowing true
+  linetype ortho
+  nodesep 60
+  ranksep 80
+  padding 20
+  roundCorner 15
 }
 
-package "Microservices" as microservices #MistyRose {
-  component "Interaction Service" as interaction_service #Lavender
-  component "Score Service" as score_service #Thistle
+skinparam rectangle {
+  BackgroundColor PastelBlue
+  BorderColor SteelBlue
 }
 
-database "MongoDB" as mongodb #LightGoldenrodYellow
-cloud "Redis Cache" as redis_cache #PaleGreen
-queue "Redis Pub/Sub" as redis_queue #LightPink
+skinparam database {
+  BackgroundColor Gold
+  BorderColor #FF9900
+}
 
-' Vertical spacing
-User -[hidden]down-> gateway
-gateway -[hidden]down-> microservices
-microservices -[hidden]down-> mongodb
+skinparam queue {
+  BackgroundColor LightPink
+  BorderColor #FF6699
+}
 
-' Horizontal spacing
-mongodb -[hidden]right-> redis_cache
-redis_cache -[hidden]right-> redis_queue
+skinparam cloud {
+  BackgroundColor PaleGreen
+  BorderColor #66CC99
+}
 
-' Main flows
-User --> gateway : HTTP Requests
-gateway --> interaction_api : POST /interactions
-gateway --> ranking_api : GET /rankings
+' ========== COMPONENTS ==========
+rectangle "API Gateway" as gateway {
+  rectangle "Interaction API" as interaction_api #LightSkyBlue
+  rectangle "Ranking API" as ranking_api #LightSkyBlue
+}
 
-interaction_api --> interaction_service : Process Interaction
-interaction_service --> mongodb : (1) Store Raw Data
-interaction_service --> redis_queue : (2) Publish Event
+package "Core Services" as services #FFF0F5 {
+  component "Interaction\nService" as interaction_svc #E6E6FA
+  component "Score\nService" as score_svc #D8BFD8
+}
 
-ranking_api --> score_service : Fetch Rankings
-score_service --> redis_cache : (3) Get Cached Rankings
-score_service --> mongodb : (4) Backup Data
+database "MongoDB\n(Persistent Storage)" as mongo_db #FFFACD
+cloud "Redis\n(Real-time Cache)" as redis_cache #E0FFE0
+queue "Redis Streams\n(Event Queue)" as redis_queue #FFE6E6
 
-redis_queue --> score_service : (5) Consume Events
+actor "End User" as user <<Person>> #666666
 
-' Notes with line breaks
-note right of interaction_service
-  <b>Interaction Service</b>
-  -------------------
+' ========== CONNECTIONS ==========
+user --> gateway : "HTTP Requests\n(POST/GET)"
+gateway --> interaction_api : "① POST /interactions"
+gateway --> ranking_api : "② GET /rankings"
+
+interaction_api --> interaction_svc : "Process\nInteraction"
+interaction_svc --> mongo_db : "③ Store Raw Data"
+interaction_svc --> redis_queue : "④ Publish Event"
+
+ranking_api --> score_svc : "Fetch Rankings"
+score_svc --> redis_cache : "⑤ Get Cached Data"
+score_svc --> mongo_db : "⑥ Backup/Sync"
+
+redis_queue --> score_svc : "⑦ Consume Events"
+
+' ========== VISUAL ENHANCEMENTS ==========
+note right of interaction_svc
+  <size:14><b>Interaction Service</b></size>
+  <color:#555555>┄┄┄┄┄┄┄┄┄┄</color>
   • View tracking
-  • Like/Share events
+  • Like/Share handling
   • Comment processing
 end note
 
-note left of score_service
-  <b>Score Service</b>
-  -----------------
+note left of score_svc
+  <size:14><b>Score Service</b></size>
+  <color:#555555>┄┄┄┄┄┄┄┄┄┄</color>
   • Real-time scoring
-  • Ranking calculation
+  • Ranking algorithm
   • Cache management
 end note
 
+' Layout helpers
+mongo_db -[hidden]right-> redis_cache
+redis_cache -[hidden]right-> redis_queue
+user -[hidden]down-> gateway
+gateway -[hidden]down-> services
+services -[hidden]down-> mongo_db
+
+legend right
+  <size:12><b>Data Flow</b></size>
+  <color:#555555>┄┄┄┄┄┄┄┄┄┄</color>
+  | Number | Description          |
+  | ①-⑦ | Key system workflows |
+end legend
 @enduml
