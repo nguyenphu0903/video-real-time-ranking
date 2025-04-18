@@ -114,8 +114,6 @@ Redis Pub/Sub is suitable for this project due to its simplicity and low-latency
 │   ├── mongo
 │   │   └── mongo.go
 │   └── redis.go
-└── resources
-    └── abi.json
 ```
 
 ## How to Run
