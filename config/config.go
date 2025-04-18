@@ -27,7 +27,7 @@ type (
 var C Config
 
 func LoadConfig() {
-	err := godotenv.Load("/Users/nguyenphu/Documents/nguyenphu/video-real-time-ranking/.env")
+	err := godotenv.Load()
 	if err != nil {
 		log.Fatalln("Application config parsing failed: " + err.Error() + " => Exit!")
 		return
