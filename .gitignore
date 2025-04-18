@@ -1,0 +1,15 @@
+# IDE
+.idea
+.vscode
+DS_Store
+
+# Binaries for programs and plugins
+*.exe*
+*.tree
+
+## do not ignore example env file
+!.env*.example
+
+# Config
+.env
+*credential*

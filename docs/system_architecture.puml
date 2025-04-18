@@ -1,0 +1,69 @@
+@startuml
+!theme plain
+skinparam linetype ortho
+skinparam nodesep 100
+skinparam ranksep 100
+skinparam padding 30
+
+scale 1.2
+
+left to right direction
+
+actor User as "End User" <<Person>> #DarkSlateGray
+
+rectangle "API Gateway" as gateway #LightBlue {
+  rectangle "Interaction API" as interaction_api #LightCyan
+  rectangle "Ranking API" as ranking_api #LightCyan
+}
+
+package "Microservices" as microservices #MistyRose {
+  component "Interaction Service" as interaction_service #Lavender
+  component "Score Service" as score_service #Thistle
+}
+
+database "MongoDB" as mongodb #LightGoldenrodYellow
+cloud "Redis Cache" as redis_cache #PaleGreen
+queue "Redis Pub/Sub" as redis_queue #LightPink
+
+' Vertical spacing
+User -[hidden]down-> gateway
+gateway -[hidden]down-> microservices
+microservices -[hidden]down-> mongodb
+
+' Horizontal spacing
+mongodb -[hidden]right-> redis_cache
+redis_cache -[hidden]right-> redis_queue
+
+' Main flows
+User --> gateway : HTTP Requests
+gateway --> interaction_api : POST /interactions
+gateway --> ranking_api : GET /rankings
+
+interaction_api --> interaction_service : Process Interaction
+interaction_service --> mongodb : (1) Store Raw Data
+interaction_service --> redis_queue : (2) Publish Event
+
+ranking_api --> score_service : Fetch Rankings
+score_service --> redis_cache : (3) Get Cached Rankings
+score_service --> mongodb : (4) Backup Data
+
+redis_queue --> score_service : (5) Consume Events
+
+' Notes with line breaks
+note right of interaction_service
+  <b>Interaction Service</b>
+  -------------------
+  • View tracking
+  • Like/Share events
+  • Comment processing
+end note
+
+note left of score_service
+  <b>Score Service</b>
+  -----------------
+  • Real-time scoring
+  • Ranking calculation
+  • Cache management
+end note
+
+@enduml
